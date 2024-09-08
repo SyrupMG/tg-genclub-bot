@@ -4,7 +4,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler
 
 async def start(update, context):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello! I'm your Telegram bot.")
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello! I'm your Telegram bot. And this was updated from git")
 
 def main():
     token = os.environ.get('TELEGRAM_BOT_TOKEN')
