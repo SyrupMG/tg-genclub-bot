@@ -6,7 +6,7 @@ services:
     working_dir: /app
     volumes:
       - ./bot:/app
-    command: sh -c "pip install python-telegram-bot && python bot.py"
+    command: /bin/sh -c "pip install -r requirements.txt && python bot.py"
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
     restart: always
