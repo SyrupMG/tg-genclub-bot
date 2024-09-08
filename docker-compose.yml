@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  bot:
+    image: python:3.9-slim
+    working_dir: /app
+    volumes:
+      - ./bot:/app
+    command: sh -c "pip install python-telegram-bot && python bot.py"
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    restart: always
