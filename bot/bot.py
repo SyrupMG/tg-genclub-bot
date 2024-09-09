@@ -1,7 +1,19 @@
 import os
-
+import markovify
 from telegram import Update
 from telegram.ext import Application, CommandHandler
+
+with open("markov.txt", "r", encoding="utf-8") as f:
+    text = f.read()
+model = markovify.Text(text)
+
+def generate_markov_text(sentences=5):
+    result = []
+    for _ in range(sentences):
+        sentence = model.make_sentence(tries=100)
+        if sentence:
+            result.append(sentence)
+    return " ".join(result)
 
 async def start(update, context):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello! I'm your Telegram bot. And this was updated from git")
@@ -26,6 +38,10 @@ async def draw_circle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     
     await update.message.reply_photo(img_byte_arr)
 
+async def markov(update: Update, context):
+    markov_text = generate_markov_text()
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=markov_text)
+
 def main():
     token = os.environ.get('TELEGRAM_BOT_TOKEN')
     if not token:
@@ -38,9 +54,11 @@ def main():
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("draw_circle", draw_circle))
+    application.add_handler(CommandHandler("markov", markov))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
     main()
+
