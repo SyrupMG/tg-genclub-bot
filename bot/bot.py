@@ -7,7 +7,7 @@ async def start(update, context):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello! I'm your Telegram bot. And this was updated from git")
 
 def main():
-    token = os.environ.get('TELEGRAM_BOT_TOKEN')
+    token = os.environ.get('7477181379:AAHCcvPcbNojS0Mh8nIY80RZTHG5vnfAGBY')
     if not token:
         raise ValueError("No token provided")
 
