@@ -1,7 +1,11 @@
 import os
+import random
+import io
+
 import markovify
 from telegram import Update
 from telegram.ext import Application, CommandHandler
+from PIL import Image, ImageDraw
 
 with open("markov.txt", "r", encoding="utf-8") as f:
     text = f.read()
