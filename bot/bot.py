@@ -1,9 +1,13 @@
 import os
+import random
+import io
+
 import markovify
 import random
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 from collections import defaultdict
+from PIL import Image, ImageDraw
 
 with open("markov.txt", "r", encoding="utf-8") as f:
     text = f.read()
@@ -22,6 +26,26 @@ def generate_markov_text(sentences=5):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello! I'm your Telegram bot. And this was updated from git")
+
+async def draw_circle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    WIDTH = 512
+    HEIGHT = 512
+
+    img = Image.new('RGB', (WIDTH, HEIGHT), color='white')
+    draw = ImageDraw.Draw(img)
+    
+    center_x = random.randint(0, WIDTH)
+    center_y = random.randint(0, HEIGHT)
+    radius = random.randint(10, WIDTH / 2)
+    color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+    
+    draw.ellipse([center_x-radius, center_y-radius, center_x+radius, center_y+radius], fill=color)
+    
+    img_byte_arr = io.BytesIO()
+    img.save(img_byte_arr, format='PNG')
+    img_byte_arr.seek(0)
+    
+    await update.message.reply_photo(img_byte_arr)
 
 async def markov(update: Update, context: ContextTypes.DEFAULT_TYPE):
     markov_text = generate_markov_text()
@@ -59,6 +83,7 @@ def main():
     application = Application.builder().token(token).build()
     
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("draw_circle", draw_circle))
     application.add_handler(CommandHandler("markov", markov))
     application.add_handler(CommandHandler("silent", silent))
     
