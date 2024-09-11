@@ -3,17 +3,31 @@ import random
 
 import random
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
-from collections import defaultdict
+from telegram.ext import (
+    Application, 
+    CommandHandler, 
+    ContextTypes, 
+    MessageHandler, 
+    filters, 
+    PicklePersistence
+)
 
 from markov_gen import generate_markov_text
 from draw_func import circle_picture, face_picture
 
-# Dictionary to store users and their message count
-user_messages = defaultdict(int)
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello! I'm your Telegram bot. And this was updated from git")
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    start_called = context.user_data.setdefault("start_called", False)
+    if start_called:
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id, 
+            text="Ты уже стартовал чат, попробуй что-нибудь более изобретательное"
+            )
+    else:
+        context.user_data.se#setdefault("start_called", True)
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id, 
+            text="Привет! Я Клубень! Не знаю, что ты делаешь у меня в личке, но тебе стоит сходить в @gen_c"
+            )
 
 async def draw_circle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:    
     await update.message.reply_photo(circle_picture())
@@ -21,51 +35,67 @@ async def draw_circle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 async def draw_face(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_photo(face_picture())
 
-async def markov(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def markov_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     markov_text = generate_markov_text()
     await context.bot.send_message(chat_id=update.effective_chat.id, text=markov_text)
 
-async def silent(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def sus_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    
-    # Get all chat members
-    chat_members = await context.bot.get_chat_administrators(chat_id)
-    
-    silent_users = []
-    for member in chat_members:
-        user = member.user
-        if user_messages[user.id] == 0 and not user.is_bot:
-            silent_users.append(user.full_name)
-    
-    if silent_users:
-        random_silent_user = random.choice(silent_users)
-        response = f"A random silent user: {random_silent_user}"
-    else:
-        response = "No silent users found."
-    
-    await context.bot.send_message(chat_id=chat_id, text=response)
+    chat_data = context.chat_data
 
-async def track_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
-    user_messages[user_id] += 1
+    # Get all users in the chat
+    users = [user for user in chat_data.keys() if user.startswith("user_data_")]
+
+    # Filter users with no text messages
+    silent_users = [user for user in users if chat_data[user].get("messages_count", 0) == 0]
+
+    if not silent_users:
+        await update.message.reply_text("Сейчас нет никого, кто вызывает у меня подозрения")
+        return
+
+    # Select a random silent user
+    random_user_key = random.choice(silent_users)
+    user_id = int(random_user_key.split("_")[-1])
+
+    # Get the user's information
+    chat_member = await context.bot.get_chat_member(chat_id, user_id)
+    user = chat_member.user
+
+    # Create a mention for the user
+    user_mention = user.mention_html()
+
+    await update.message.reply_html(f"SUS пользователь: {user_mention}")
+
+async def track_updates(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    if not user: return
+
+    user_data_key = f"user_data:{user.id}"
+    user_data: dict = context.chat_data.setdefault(user_data_key, dict())
+
+    user_data["updates_count"] = user_data.get("updates_count", 0) + 1
+
+    if update.message and update.message.text:
+        user_data["messages_count"] = user_data.get("messages_count", 0) + 1
 
 def main():
     token = os.environ.get('TELEGRAM_BOT_TOKEN')
     if not token:
         raise ValueError("No token provided")
     
-    application = Application.builder().token(token).build()
+    persistence = PicklePersistence(filepath="conversationbot")
+    application = Application.builder().token(token).persistence(persistence).build()
     
-    application.add_handler(CommandHandler("start", start, filters.ChatType.PRIVATE))
+    application.add_handler(CommandHandler("start", start_command, filters.ChatType.PRIVATE))
 
     application.add_handler(CommandHandler("draw_circle", draw_circle))
     application.add_handler(CommandHandler("draw_face", draw_face))
 
-    application.add_handler(CommandHandler("markov", markov))
-    application.add_handler(CommandHandler("silent", silent))
+    application.add_handler(CommandHandler("markov", markov_command))
+    application.add_handler(CommandHandler("sus", sus_command))
     
-    # Add a message handler to track user messages
-    application.add_handler(MessageHandler(filters.ALL, track_messages), -1)
+    # Add a update handler
+    application.add_handler(MessageHandler(filters.ALL, track_updates), -1)
     
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
