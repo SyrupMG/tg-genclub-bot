@@ -153,7 +153,7 @@ def main():
     
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("draw_circle", draw_circle))
-    application.add_handler(CommandHandler("draw_circle", draw_face))
+    application.add_handler(CommandHandler("draw_face", draw_face))
     application.add_handler(CommandHandler("markov", markov))
     application.add_handler(CommandHandler("silent", silent))
     
