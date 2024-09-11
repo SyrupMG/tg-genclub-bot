@@ -1,3 +1,5 @@
 .env
 update_and_restart.bat
 updater_script.bat
+.DS_Store
+__pycache__
