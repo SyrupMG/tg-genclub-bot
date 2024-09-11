@@ -16,14 +16,14 @@ from markov_gen import generate_markov_text
 from draw_func import circle_picture, face_picture
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    start_called = context.user_data.setdefault("start_called", False)
+    start_called = context.user_data.get("start_called", False)
     if start_called:
         await context.bot.send_message(
             chat_id=update.effective_chat.id, 
             text="Ты уже стартовал чат, попробуй что-нибудь более изобретательное"
             )
     else:
-        context.user_data.se#setdefault("start_called", True)
+        context.user_data["start_called"] = True
         await context.bot.send_message(
             chat_id=update.effective_chat.id, 
             text="Привет! Я Клубень! Не знаю, что ты делаешь у меня в личке, но тебе стоит сходить в @gen_c"
