@@ -13,8 +13,14 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Stash local changes
+      run: git stash
+
     - name: Pull latest changes
       run: git pull origin master
+
+    - name: Apply stashed changes
+      run: git stash pop
 
     - name: Restart Docker Compose
       env:
