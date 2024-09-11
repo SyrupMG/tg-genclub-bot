@@ -94,13 +94,13 @@ async def draw_face(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     mouth_right = mouth_left + mouth_width
     mouth_bottom = mouth_top + mouth_height
     
-    # Случайно выбираем, будет ли рот улыбкой или хмурым
-if random.choice([True, False]):
-    # Улыбка
-    draw.arc([mouth_left, mouth_top, mouth_right, mouth_bottom], start=0, end=180, fill=mouth_color, width=random.randint(5, 20))
-else:
-    # Хмурый рот
-    draw.arc([mouth_left, mouth_top, mouth_right, mouth_bottom], start=180, end=360, fill=mouth_color, width=random.randint(5, 20))
+        # Случайно выбираем, будет ли рот улыбкой или хмурым
+    if random.choice([True, False]):
+        # Улыбка
+        draw.arc([mouth_left, mouth_top, mouth_right, mouth_bottom], start=0, end=180, fill=mouth_color, width=random.randint(5, 20))
+    else:
+        # Хмурый рот
+        draw.arc([mouth_left, mouth_top, mouth_right, mouth_bottom], start=180, end=360, fill=mouth_color, width=random.randint(5, 20))
     
     # Добавляем случайные элементы (например, веснушки или румянец)
     if random.choice([True, False]):
