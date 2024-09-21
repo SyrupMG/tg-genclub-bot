@@ -106,7 +106,7 @@ async def validate_spam_updates(update: Update, context: ContextTypes.DEFAULT_TY
         logger.debug(f"no text in message: {update.effective_message}")
         return
 
-    spam_probability = validate_spam_text(text)
+    spam_probability = await validate_spam_text(text)
     logger.debug(f"checked message: {text}\nspam prob: {spam_probability}")
     if spam_probability >= 0.65:
         logger.debug(f"It's very probably spam!!!\nmessage:{text}\nfrom: {user.name}")
