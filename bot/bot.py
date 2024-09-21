@@ -18,7 +18,7 @@ from draw_func import circle_picture, face_picture
 from spam_validator import validate_spam_text
 
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG
 )
 
 logger = logging.getLogger("tg-genclub-bot")
