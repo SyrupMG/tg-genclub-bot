@@ -142,7 +142,7 @@ async def spam_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Думаю, не спам")
     
 async def notify_admins_about_delete(chat: Chat, message: Message, bot: Bot, reason: str):
-    admins = await chat.get_administrators
+    admins = await chat.get_administrators()
     notification = f"Из чата {chat.title} было удалено сообщение по причине: спам\n"
     notification += f"Контент сообщения: {message.text}\n\n"
     notification += f"Если вы считаете, что это ошибка, восстановите сообщение через настройки чата. В случае, если это не ошибка, возможно, стоит забанить пользователя и удалить пользователя"
