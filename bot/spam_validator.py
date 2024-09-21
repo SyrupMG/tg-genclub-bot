@@ -1,7 +1,10 @@
 import os
 import json
+import logging
 
 from openai import OpenAI
+
+logger = logging.getLogger("tg-genclub-bot")
 
 async def validate_spam_text(text: str) -> float:
     llm_host = os.environ["ANTISPAM_LLM_HOST"]
@@ -45,9 +48,12 @@ async def validate_spam_text(text: str) -> float:
     )
 
     answer = chat_completion.choices[0].message.content
-    if not answer: return 0.5
+    if not answer:
+        logging.debug(f"no valid response from LLM")
+        return 0.5
     try:
         parsed_answer = json.loads(answer)
         return float(parsed_answer.get("spam_probability", 0.5))
-    except json.JSONDecodeError:
+    except Exception as e:
+        logging.debug(f"error while unwrapping answer: {answer} +++ {e}")
         return 0.5
