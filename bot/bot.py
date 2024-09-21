@@ -18,10 +18,12 @@ from draw_func import circle_picture, face_picture
 from spam_validator import validate_spam_text
 
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger("tg-genclub-bot")
+logger.setLevel(logging.DEBUG)
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     start_called = context.user_data.get("start_called", False)
