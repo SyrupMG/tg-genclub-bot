@@ -17,6 +17,8 @@ jobs:
     - name: Restart Docker Compose
       env:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        ANTISPAM_LLM_HOST: ${{ secrets.ANTISPAM_LLM_HOST }}
+        ANTISPAM_LLM_MODEL: ${{ secrets.ANTISPAM_LLM_MODEL }}
       run: |
         docker-compose down
         docker-compose up -d
