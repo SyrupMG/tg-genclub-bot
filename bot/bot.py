@@ -113,7 +113,7 @@ async def validate_spam_updates(update: Update, context: ContextTypes.DEFAULT_TY
     if spam_probability >= 0.65:
         logger.debug(f"It's very probably spam!!!\nmessage:{text}\nfrom: {user.name}")
         try:
-            update.effective_chat.delete_message(message_id=update.message.message_id)
+            await update.effective_chat.delete_message(message_id=update.message.message_id)
 
             await notify_admins_about_delete(update.effective_chat, update.message, context.bot, "потенциально спам")
         except Exception as e:
@@ -124,6 +124,10 @@ async def validate_spam_updates(update: Update, context: ContextTypes.DEFAULT_TY
 async def spam_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Get the text after the command
     text = ' '.join(context.args)
+
+    if not update.message: 
+        logger.warning(f"А как мы вообще сюда попали?\nupdate: {update}")
+        return
     
     if not text:
         await update.message.reply_text("После команды должен быть текст для проверки")
