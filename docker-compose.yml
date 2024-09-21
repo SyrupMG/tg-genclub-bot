@@ -9,4 +9,6 @@ services:
     command: /bin/sh -c "pip install -r requirements.txt && python bot.py"
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - ANTISPAM_LLM_HOST=${ANTISPAM_LLM_HOST}
+      - ANTISPAM_LLM_MODEL=${ANTISPAM_LLM_MODEL}
     restart: always

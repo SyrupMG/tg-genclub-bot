@@ -2,7 +2,7 @@ import os
 import random
 
 import random
-from telegram import Update
+from telegram import Update, Chat, Message, Bot
 from telegram.ext import (
     Application, 
     CommandHandler, 
@@ -14,6 +14,7 @@ from telegram.ext import (
 
 from markov_gen import generate_markov_text
 from draw_func import circle_picture, face_picture
+from spam_validator import validate_spam_text
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     start_called = context.user_data.get("start_called", False)
@@ -78,6 +79,49 @@ async def track_updates(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message and update.message.text:
         user_data["messages_count"] = user_data.get("messages_count", 0) + 1
 
+async def validate_spam_updates(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    if not user: return
+
+    user_data_key = f"user_data:{user.id}"
+    user_data: dict = context.chat_data.setdefault(user_data_key, dict())
+
+    messages_count = user_data.get("messages_count", 0)
+
+    # if user already wrote something more than 2 times, then skip and suggest, that they are not spammer
+    if messages_count >= 2: return
+
+    text = update.message.text
+    # no text, we cant check that for spam
+    if text is None or text == "": return
+
+    spam_probability = validate_spam_text(text)
+    if spam_probability >= 0.65:
+        print(f"It's very probably spam!!!\nmessage:{text}\nfrom: {user.name}")
+        try:
+            update.effective_chat.delete_message(message_id=update.message.message_id)
+
+            await notify_admins_about_delete(update.effective_chat, update.message, context.bot, "потенциально спам")
+        except Exception as e:
+            print(f"Error deleting message: {e}")
+    else: 
+        return
+    
+async def notify_admins_about_delete(chat: Chat, message: Message, bot: Bot, reason: str):
+    admins = await chat.get_administrators
+    notification = f"Из чата {chat.title} было удалено сообщение по причине: спам\n"
+    notification += f"Контент сообщения: {message.text}\n\n"
+    notification += f"Если вы считаете, что это ошибка, восстановите сообщение через настройки чата. В случае, если это не ошибка, возможно, стоит забанить пользователя и удалить пользователя"
+
+    for admin in admins:
+        try:
+            await bot.send_message(
+                chat_id=admin.user.id,
+                text=notification
+            )
+        except Exception as e:
+            print(f"Failed to send notification to admin {admin.user.id}: {e}")
+
 def main():
     token = os.environ.get('TELEGRAM_BOT_TOKEN')
     if not token:
@@ -93,8 +137,9 @@ def main():
 
     application.add_handler(CommandHandler("markov", markov_command))
     application.add_handler(CommandHandler("sus", sus_command))
-    
-    # Add a update handler
+
+    # SPAM tracker
+    application.add_handler(MessageHandler(filters.ALL, validate_spam_updates), -2)
     application.add_handler(MessageHandler(filters.ALL, track_updates), -1)
     
     application.run_polling(allowed_updates=Update.ALL_TYPES)
