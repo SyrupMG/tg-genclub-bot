@@ -121,6 +121,22 @@ async def validate_spam_updates(update: Update, context: ContextTypes.DEFAULT_TY
     else: 
         return
     
+async def spam_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Get the text after the command
+    text = ' '.join(context.args)
+    
+    if not text:
+        await update.message.reply_text("После команды должен быть текст для проверки")
+        return
+
+    spam_probability = await validate_spam_text(text)
+    is_spam = spam_probability >= 0.65
+    
+    if is_spam:
+        await update.message.reply_text("Этот текст - СПАМ")
+    else:
+        await update.message.reply_text("Думаю, не спам")
+    
 async def notify_admins_about_delete(chat: Chat, message: Message, bot: Bot, reason: str):
     admins = await chat.get_administrators
     notification = f"Из чата {chat.title} было удалено сообщение по причине: спам\n"
@@ -152,6 +168,7 @@ def main():
     application.add_handler(CommandHandler("markov", markov_command))
     application.add_handler(CommandHandler("sus", sus_command))
 
+    application.add_handler(CommandHandler("spam_check", spam_check, filters.ChatType.PRIVATE))
     # SPAM tracker
     application.add_handler(MessageHandler(filters.ALL, validate_spam_updates), 2)
     application.add_handler(MessageHandler(filters.ALL, track_updates), -1)
