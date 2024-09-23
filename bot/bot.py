@@ -1,17 +1,21 @@
 import os
 import random
 import logging
+import html
 
 import random
-from telegram import Update, Chat, Message, Bot
+from telegram import Update, Chat, Message, Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, 
     CommandHandler, 
-    ContextTypes, 
-    MessageHandler, 
+    ContextTypes,
+    CallbackContext,
+    MessageHandler,
+    CallbackQueryHandler,
     filters, 
     PicklePersistence
 )
+from telegram.error import TelegramError
 
 from markov_gen import generate_markov_text
 from draw_func import circle_picture, face_picture
@@ -137,32 +141,80 @@ async def spam_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
     is_spam = spam_probability >= 0.65
     
     if is_spam:
-        await update.message.reply_text("Этот текст - СПАМ")
+        await update.message.reply_text(f"Этот текст - СПАМ ({spam_probability})")
     else:
-        await update.message.reply_text("Думаю, не спам")
+        await update.message.reply_text(f"Думаю, не спа ({spam_probability})")
     
 async def notify_admins_about_delete(chat: Chat, message: Message, bot: Bot, reason: str):
     admins = await chat.get_administrators()
-    notification = f"Из чата {chat.title} было удалено сообщение по причине: спам\n"
-    notification += f"Контент сообщения: {message.text}\n\n"
+
+    chat_link = f"<a href='https://t.me/{chat.username}'>{html.escape(chat.title)}</a>" if chat.username else html.escape(chat.title)
+    user_mention = f"<a href='tg://user?id={message.from_user.id}'>{html.escape(message.from_user.name)}</a>"
+
+    notification = f"Из чата {chat_link} было удалено сообщение пользователя {user_mention} по причине: {reason}\n"
+    notification += f"Контент сообщения: {html.escape(message.text)}\n\n"
     notification += f"Если вы считаете, что это ошибка, восстановите сообщение через настройки чата. В случае, если это не ошибка, возможно, стоит забанить пользователя и удалить пользователя"
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Забанить пользователя", callback_data=f"ban_user:{chat.id}:{message.from_user.id}")]
+    ])
 
     for admin in admins:
         try:
             await bot.send_message(
                 chat_id=admin.user.id,
-                text=notification
+                text=notification,
+                parse_mode='HTML',
+                disable_web_page_preview=True,
+                reply_markup=keyboard
             )
         except Exception as e:
             logger.debug(f"Failed to send notification to admin {admin.user.id}: {e}")
 
+async def ban_user_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    await query.answer()
+
+    bot: Bot = context.bot
+
+    # Extract data from callback_data
+    _, chat_id, user_id = query.data.split(':')
+    chat_id = int(chat_id)
+    user_id = int(user_id)
+
+    # Check if the user who pressed the button is an admin of the chat
+    try:
+        chat_member = await bot.get_chat_member(chat_id, query.from_user.id)
+        if chat_member.status not in ['creator', 'administrator']:
+            await query.edit_message_text("У вас нет прав для выполнения этого действия.")
+            return
+    except TelegramError:
+        await query.edit_message_text("Не удалось проверить права администратора.")
+        return
+
+    try:
+        # Ban the user
+        await bot.ban_chat_member(chat_id, user_id)
+        
+        # Notify the admin that the user was banned
+        await query.edit_message_text(
+            text=f"Пользователь (ID: {user_id}) был успешно забанен в чате (ID: {chat_id}).",
+            parse_mode='HTML'
+        )
+    except Exception as e:
+        # If there's an error, inform the admin
+        await query.edit_message_text(
+            text=f"Не удалось забанить пользователя (ID: {user_id}) в чате (ID: {chat_id}). Ошибка: {str(e)}",
+            parse_mode='HTML'
+        )
+
 def main():
-    token = os.environ.get('TELEGRAM_BOT_TOKEN')
-    if not token:
+    TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
+    if not TOKEN:
         raise ValueError("No token provided")
     
     persistence = PicklePersistence(filepath="conversationbot")
-    application = Application.builder().token(token).persistence(persistence).build()
+    application = Application.builder().token(TOKEN).persistence(persistence).build()
     
     application.add_handler(CommandHandler("start", start_command, filters.ChatType.PRIVATE))
 
@@ -173,8 +225,10 @@ def main():
     application.add_handler(CommandHandler("sus", sus_command))
 
     application.add_handler(CommandHandler("spam_check", spam_check, filters.ChatType.PRIVATE))
+
     # SPAM tracker
     application.add_handler(MessageHandler(filters.ALL, validate_spam_updates), 2)
+    application.add_handler(CallbackQueryHandler(ban_user_callback, pattern="^ban_user:"))
     application.add_handler(MessageHandler(filters.ALL, track_updates), -1)
     
     application.run_polling(allowed_updates=Update.ALL_TYPES)

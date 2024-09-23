@@ -7,13 +7,13 @@ from openai import OpenAI
 logger = logging.getLogger("tg-genclub-bot")
 
 async def validate_spam_text(text: str) -> float:
-    llm_host = os.environ["ANTISPAM_LLM_HOST"]
-    llm_model = os.environ["ANTISPAM_LLM_MODEL"]
+    LLM_HOST = os.environ["ANTISPAM_LLM_HOST"]
+    LLM_MODEL = os.environ["ANTISPAM_LLM_MODEL"]
 
-    llm_client = OpenAI(base_url=llm_host, api_key="dummy")
+    llm_client = OpenAI(base_url=LLM_HOST, api_key="dummy")
 
     chat_completion = llm_client.chat.completions.create(
-        model=llm_model,
+        model=LLM_MODEL,
         messages=[
             {
                 "role": "system",
