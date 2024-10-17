@@ -119,7 +119,7 @@ async def validate_spam_updates(update: Update, context: ContextTypes.DEFAULT_TY
         try:
             await update.effective_chat.delete_message(message_id=update.message.message_id)
 
-            await notify_admins_about_delete(update.effective_chat, update.message, context.bot, "потенциально спам")
+            await notify_admins_about_delete(update.effective_chat, update.message, context.bot, "spam")
         except Exception as e:
             logger.debug(f"Error deleting message: {e}")
     else: 
@@ -151,9 +151,14 @@ async def notify_admins_about_delete(chat: Chat, message: Message, bot: Bot, rea
     chat_link = f"<a href='https://t.me/{chat.username}'>{html.escape(chat.title)}</a>" if chat.username else html.escape(chat.title)
     user_mention = f"<a href='tg://user?id={message.from_user.id}'>{html.escape(message.from_user.name)}</a>"
 
-    notification = f"Из чата {chat_link} было удалено сообщение пользователя {user_mention} по причине: {reason}\n"
-    notification += f"Контент сообщения: {html.escape(message.text)}\n\n"
-    notification += f"Если вы считаете, что это ошибка, восстановите сообщение через настройки чата. В случае, если это не ошибка, возможно, стоит забанить пользователя и удалить пользователя"
+    notification = "" 
+    if reason == "spam":
+        notification = f"Из чата {chat_link} было удалено сообщение похожее на спам:\n\n"
+    else:
+        notification = f"Из чата {chat_link} было удалено сообщение по причине: {reason}\n\n"
+    notification += f"{user_mention}\n"
+    notification += f"<blockquote>{html.escape(message.text)}</blockquote>\n\n"
+    notification += f"<i>Если вы считаете, что это ошибка, восстановите сообщение через настройки чата</i>"
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("Забанить пользователя", callback_data=f"ban_user:{chat.id}:{message.from_user.id}")]
