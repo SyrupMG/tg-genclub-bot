@@ -20,6 +20,7 @@ from telegram.error import TelegramError
 from markov_gen import generate_markov_text
 from draw_func import circle_picture, face_picture
 from spam_validator import validate_spam_text
+from very_sus import very_sus
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -52,6 +53,10 @@ async def draw_face(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def markov_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     markov_text = generate_markov_text()
     await context.bot.send_message(chat_id=update.effective_chat.id, text=markov_text)
+
+async def very_sus_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    answer = await very_sus()
+    await update.message.reply_text(answer)
 
 async def sus_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -227,7 +232,7 @@ def main():
     application.add_handler(CommandHandler("draw_face", draw_face))
 
     application.add_handler(CommandHandler("markov", markov_command))
-    application.add_handler(CommandHandler("sus", sus_command))
+    application.add_handler(CommandHandler("sus", very_sus_command))
 
     application.add_handler(CommandHandler("spam_check", spam_check, filters.ChatType.PRIVATE))
 
