@@ -29,10 +29,7 @@ async def very_sus() -> str:
         ],
         temperature=0.5 + random.random() * 0.5,
         max_tokens=-1,
-        stream=False,
-        response_format = {
-            "type": "text",
-        }
+        stream=False
     )
 
     answer = chat_completion.choices[0].message.content
