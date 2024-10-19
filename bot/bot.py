@@ -111,7 +111,7 @@ async def validate_spam_updates(update: Update, context: ContextTypes.DEFAULT_TY
         logger.debug(f"user {user.id} already has {messages_count} message, so no spam check")
         return
 
-    text = update.effective_message.text
+    text = update.effective_message.text or update.effective_message.caption
     # no text, we cant check that for spam
     if text is None or text == "": 
         logger.debug(f"no text in message: {update.effective_message}")
