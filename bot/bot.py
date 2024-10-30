@@ -151,8 +151,6 @@ async def spam_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Думаю, не спа ({spam_probability})")
     
 async def notify_admins_about_delete(chat: Chat, message: Message, bot: Bot, reason: str):
-    admins = await chat.get_administrators()
-
     chat_link = f"<a href='https://t.me/{chat.username}'>{html.escape(chat.title)}</a>" if chat.username else html.escape(chat.title)
     user_mention = f"<a href='tg://user?id={message.from_user.id}'>{html.escape(message.from_user.name)}</a>"
 
@@ -169,7 +167,7 @@ async def notify_admins_about_delete(chat: Chat, message: Message, bot: Bot, rea
         [InlineKeyboardButton("Забанить пользователя", callback_data=f"ban_user:{chat.id}:{message.from_user.id}")]
     ])
 
-    for admin in admins:
+    for admin in await chat.get_administrators():
         try:
             await bot.send_message(
                 chat_id=admin.user.id,
@@ -218,6 +216,35 @@ async def ban_user_callback(update: Update, context: CallbackContext):
             parse_mode='HTML'
         )
 
+async def chat_info_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Check if command was called by admin
+    if not update.effective_chat:
+        logger.debug(f"This command can only be used in a chat. Ignore")
+        return
+    try:
+        user = update.effective_user
+        chat_member = await context.bot.get_chat_member(update.effective_chat.id, user.id)
+        
+        if chat_member.status not in ['creator', 'administrator']:
+            logger.debug(f"This command is only available to chat administrators. Ignore")
+            return
+        
+        chat = update.effective_chat
+        chat_info = f"""
+        Chat Information:
+        ID: {chat.id}
+        Type: {chat.type}
+        Title: {chat.title}
+        Description: {chat.description or 'No description'}
+        Members count: {await chat.get_member_count()}
+        Username: {f'@{chat.username}' if chat.username else 'No username'}
+        Can send messages: {chat.permissions.can_send_messages if chat.permissions else 'N/A'}
+        Invite link: {await chat.export_invite_link() if chat.type != 'private' else 'N/A'}
+        """
+        await update.message.reply_text(chat_info)
+    except Exception as e:
+        logger.error(f"Error in chat_info: {e}")
+
 def main():
     TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
     if not TOKEN:
@@ -235,6 +262,8 @@ def main():
     application.add_handler(CommandHandler("sus", very_sus_command))
 
     application.add_handler(CommandHandler("spam_check", spam_check, filters.ChatType.PRIVATE))
+
+    application.add_handler(CommandHandler("chat_info", chat_info_command))
 
     # SPAM tracker
     application.add_handler(MessageHandler(filters.ALL, validate_spam_updates), 2)
