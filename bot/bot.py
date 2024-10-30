@@ -235,10 +235,8 @@ async def chat_info_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ID: {chat.id}
         Type: {chat.type}
         Title: {chat.title}
-        Description: {chat.description or 'No description'}
         Members count: {await chat.get_member_count()}
         Username: {f'@{chat.username}' if chat.username else 'No username'}
-        Can send messages: {chat.permissions.can_send_messages if chat.permissions else 'N/A'}
         Invite link: {await chat.export_invite_link() if chat.type != 'private' else 'N/A'}
         """
         await update.message.reply_text(chat_info)
