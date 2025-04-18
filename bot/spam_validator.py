@@ -3,10 +3,17 @@ import json
 import logging
 
 from openai import OpenAI
+from banned_words import contains_banned_texts
 
 logger = logging.getLogger("tg-genclub-bot")
 
 async def validate_spam_text(text: str) -> float:
+    if contains_banned_texts(text):
+        return 1.1
+    else:
+        return await validate_spam_text_llm(text)
+
+async def validate_spam_text_llm(text: str) -> float:
     LLM_HOST = os.environ["ANTISPAM_LLM_HOST"]
     LLM_MODEL = os.environ["ANTISPAM_LLM_MODEL"]
 

@@ -119,7 +119,14 @@ async def validate_spam_updates(update: Update, context: ContextTypes.DEFAULT_TY
 
     spam_probability = await validate_spam_text(text)
     logger.debug(f"checked message: {text}\nspam prob: {spam_probability}")
-    if spam_probability >= 0.65:
+    if spam_probability >= 1:
+        logger.debug(f"It's ABSOLUTELY spam!!!\nmessage:{text}\nfrom: {user.name}")
+        try:
+            await update.effective_chat.delete_message(message_id=update.message.message_id)
+            await update.effective_chat.ban_member(user_id=user.id)
+        except Exception as e:
+            logger.debug(f"Error deleting message: {e} or banning user: {user}")
+    elif spam_probability >= 0.65:
         logger.debug(f"It's very probably spam!!!\nmessage:{text}\nfrom: {user.name}")
         try:
             await update.effective_chat.delete_message(message_id=update.message.message_id)

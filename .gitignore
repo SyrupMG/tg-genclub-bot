@@ -3,3 +3,6 @@ update_and_restart.bat
 updater_script.bat
 .DS_Store
 __pycache__
+suspicious_users_*.*
+*.session
+*.session-journal
