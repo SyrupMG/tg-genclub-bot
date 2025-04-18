@@ -4,6 +4,8 @@ banned_texts = [
     "удаленка с выгодными условиями",
     "напиши «+» в лс",
     "Haпиши “+” в личкy",
+    "напишите мне «плюс»",
+    "напишите \"плюс\", объясню",
     "возможность дополнительного дохода на выгодных условиях",
     "Доход от * рублей в день",
     "кто хочет зарабатывать ежедневно от",
@@ -21,6 +23,7 @@ banned_texts = [
     "Удалёнка, новый форма от ",
     "выйти на доход от ",
     "Нужны люди для дела, доходность от ",
+    "гибкая неполная занятость, с выходом до * долларов в день"
 ]
 
 def contains_banned_texts(message: str) -> bool:
@@ -30,7 +33,7 @@ def contains_banned_texts(message: str) -> bool:
         banned_text = banned_text.lower()
 
         cleaned_message = clean_message(message).lower()
-        
+
         if banned_text in cleaned_message:
             return True
     return False
