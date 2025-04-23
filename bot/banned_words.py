@@ -62,6 +62,7 @@ banned_texts = [
     "РЕПЛИКА *:*",
     "НЕСКОЛЬКО ЧАСОВ В ДЕНЬ",
     "Без затрат по времени",
+    "только совершеннолетние"
 ]
 
 def contains_banned_texts(message: str) -> bool:
